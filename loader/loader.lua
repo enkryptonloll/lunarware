@@ -20,15 +20,13 @@ local scripts = {
     {name = "blox fruits", category = "farming", url = "https://raw.githubusercontent.com/enkryptonloll/lunarware/main/bloxfruits/main.lua"},
     {name = "lumber tycoon", category = "farming", url = "https://raw.githubusercontent.com/enkryptonloll/lunarware/main/lumbertycoon/main.lua"},
     {name = "booga booga", category = "farming", url = "https://raw.githubusercontent.com/enkryptonloll/lunarware/main/boogabooga/main.lua"},
-    {name = "sab", category = "farming", url = "https://raw.githubusercontent.com/enkryptonloll/lunarware/main/sab/main.lua"},
     {name = "blade ball", category = "farming", url = "https://raw.githubusercontent.com/enkryptonloll/lunarware/main/bladeball/main.lua"},
     
     -- survival scripts
     {name = "natural disaster", category = "survival", url = "https://raw.githubusercontent.com/enkryptonloll/lunarware/main/naturaldisaster/main.lua"},
     
-    -- misc scripts
-    {name = "troll", category = "misc", url = "https://raw.githubusercontent.com/enkryptonloll/lunarware/main/troll/main.lua"},
-    {name = "universal", category = "misc", url = "https://raw.githubusercontent.com/enkryptonloll/lunarware/main/universal/main.lua"},
+    -- admin script
+    {name = "lunar admin", category = "admin", url = "https://raw.githubusercontent.com/enkryptonloll/lunarware/main/admin/main.lua"},
 }
 
 -- stored data
@@ -41,23 +39,23 @@ local loadingqueue = false
 local function loaddata()
     local success, data = pcall(function() return readfile("lunarware_favorites.json") end)
     if success and data then
-        favorites = game:getservice("httpservice"):jsondecode(data)
+        favorites = game:GetService("HttpService"):JSONDecode(data)
     end
     local success2, data2 = pcall(function() return readfile("lunarware_recent.json") end)
     if success2 and data2 then
-        recent = game:getservice("httpservice"):jsondecode(data2)
+        recent = game:GetService("HttpService"):JSONDecode(data2)
     end
 end
 
 local function savefavorites()
     pcall(function()
-        writefile("lunarware_favorites.json", game:getservice("httpservice"):jsonencode(favorites))
+        writefile("lunarware_favorites.json", game:GetService("HttpService"):JSONEncode(favorites))
     end)
 end
 
 local function saverecent()
     pcall(function()
-        writefile("lunarware_recent.json", game:getservice("httpservice"):jsonencode(recent))
+        writefile("lunarware_recent.json", game:GetService("HttpService"):JSONEncode(recent))
     end)
 end
 
@@ -78,24 +76,24 @@ end
 loaddata()
 
 -- main window
-local win = lib:window("lunarware hub", color3.fromrgb(30, 30, 40), enum.keycode.k)
+local win = lib:Window("lunarware hub", Color3.fromRGB(30, 30, 40), Enum.KeyCode.K)
 
 -- tabs
-local home_tab = win:tab("home")
-local scripts_tab = win:tab("scripts")
-local favorites_tab = win:tab("favorites")
-local recent_tab = win:tab("recent")
-local queue_tab = win:tab("queue")
-local settings_tab = win:tab("settings")
+local home_tab = win:Tab("home")
+local scripts_tab = win:Tab("scripts")
+local favorites_tab = win:Tab("favorites")
+local recent_tab = win:Tab("recent")
+local queue_tab = win:Tab("queue")
+local settings_tab = win:Tab("settings")
 
 -- home tab
-home_tab:label("lunarware hub v3.0")
-home_tab:label("")
-home_tab:label("total scripts: " .. #scripts)
-home_tab:label("favorites: " .. #favorites)
-home_tab:label("")
-home_tab:button("refresh scripts", function()
-    lib:notification("lunarware", "refreshing scripts...", "ok")
+home_tab:Label("lunarware hub v3.0")
+home_tab:Label("")
+home_tab:Label("total scripts: " .. #scripts)
+home_tab:Label("favorites: " .. #favorites)
+home_tab:Label("")
+home_tab:Button("refresh scripts", function()
+    lib:Notification("lunarware", "refreshing scripts...", "ok")
     for i, script in ipairs(scripts) do
         scriptstatus[script.name] = nil
     end
@@ -105,25 +103,25 @@ end)
 local function loadscript(url, name)
     addrecent(name)
     local success, result = pcall(function()
-        return game:getservice("http"):getasync(url)
+        return game:HttpGet(url)
     end)
     if success and result and result ~= "" then
         loadstring(result)()
-        lib:notification("lunarware", name .. " loaded", "ok")
+        lib:Notification("lunarware", name .. " loaded", "ok")
         scriptstatus[name] = "loaded"
     else
-        lib:notification("error", "failed to load " .. name, "ok")
+        lib:Notification("error", "failed to load " .. name, "ok")
         scriptstatus[name] = "error"
     end
 end
 
 -- scripts tab
-local search_box = scripts_tab:textbox("search", true, function(v)
+local search_box = scripts_tab:Textbox("search", true, function(v)
     local searchterm = v:lower()
-    for _, child in pairs(scripts_tab.container:getchildren()) do
-        if child:isa("textbutton") then
-            local shouldshow = searchterm == "" or child.name:lower():find(searchterm)
-            child.visible = shouldshow
+    for _, child in pairs(scripts_tab.Container:GetChildren()) do
+        if child:IsA("TextButton") then
+            local shouldshow = searchterm == "" or string.find(string.lower(child.Name), searchterm)
+            child.Visible = shouldshow
         end
     end
 end)
@@ -132,48 +130,48 @@ end)
 local currentcategory = "all"
 local function filterbycategory(category)
     currentcategory = category
-    for _, child in pairs(scripts_tab.container:getchildren()) do
-        if child:isa("textbutton") then
+    for _, child in pairs(scripts_tab.Container:GetChildren()) do
+        if child:IsA("TextButton") then
             local scriptdata = nil
             for _, s in ipairs(scripts) do
-                if s.name == child.name then
+                if s.name == child.Name then
                     scriptdata = s
                     break
                 end
             end
             if scriptdata then
                 local showcategory = category == "all" or scriptdata.category == category
-                child.visible = showcategory
+                child.Visible = showcategory
             end
         end
     end
 end
 
-scripts_tab:button("all", function() filterbycategory("all") end)
-scripts_tab:button("combat", function() filterbycategory("combat") end)
-scripts_tab:button("farming", function() filterbycategory("farming") end)
-scripts_tab:button("survival", function() filterbycategory("survival") end)
-scripts_tab:button("misc", function() filterbycategory("misc") end)
+scripts_tab:Button("all", function() filterbycategory("all") end)
+scripts_tab:Button("combat", function() filterbycategory("combat") end)
+scripts_tab:Button("farming", function() filterbycategory("farming") end)
+scripts_tab:Button("survival", function() filterbycategory("survival") end)
+scripts_tab:Button("admin", function() filterbycategory("admin") end)
 
-scripts_tab:label("")
+scripts_tab:Label("")
 
 for _, script in ipairs(scripts) do
-    local btn = scripts_tab:button(script.name, function()
+    local btn = scripts_tab:Button(script.name, function()
         loadscript(script.url, script.name)
     end)
-    btn.name = script.name
+    btn.Name = script.name
 end
 
 -- favorites tab
 local function updatefavoritestab()
-    for _, child in pairs(favorites_tab.container:getchildren()) do
-        if child:isa("textbutton") then
-            child:destroy()
+    for _, child in pairs(favorites_tab.Container:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
         end
     end
     
     if #favorites == 0 then
-        favorites_tab:label("no favorites yet")
+        favorites_tab:Label("no favorites yet")
         return
     end
     
@@ -186,27 +184,24 @@ local function updatefavoritestab()
             end
         end
         if scriptdata then
-            local btn = favorites_tab:button(scriptdata.name, function()
+            local btn = favorites_tab:Button(scriptdata.name, function()
                 loadscript(scriptdata.url, scriptdata.name)
             end)
-            btn.name = scriptdata.name
+            btn.Name = scriptdata.name
         end
     end
 end
 
--- add to favorites from scripts tab
--- modified to add favorite when clicking star (will need ui modification)
-
 -- recent tab
 local function updaterecenttab()
-    for _, child in pairs(recent_tab.container:getchildren()) do
-        if child:isa("textbutton") then
-            child:destroy()
+    for _, child in pairs(recent_tab.Container:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
         end
     end
     
     if #recent == 0 then
-        recent_tab:label("no recent scripts")
+        recent_tab:Label("no recent scripts")
         return
     end
     
@@ -219,10 +214,10 @@ local function updaterecenttab()
             end
         end
         if scriptdata then
-            local btn = recent_tab:button(scriptdata.name, function()
+            local btn = recent_tab:Button(scriptdata.name, function()
                 loadscript(scriptdata.url, scriptdata.name)
             end)
-            btn.name = scriptdata.name
+            btn.Name = scriptdata.name
         end
     end
 end
@@ -235,13 +230,13 @@ local function processqueue()
     table.remove(queuedscripts, 1)
     
     local success, result = pcall(function()
-        return game:getservice("http"):getasync(nextscript.url)
+        return game:HttpGet(nextscript.url)
     end)
     if success and result and result ~= "" then
         loadstring(result)()
-        lib:notification("lunarware", nextscript.name .. " loaded from queue", "ok")
+        lib:Notification("lunarware", nextscript.name .. " loaded from queue", "ok")
     else
-        lib:notification("error", "failed to load " .. nextscript.name, "ok")
+        lib:Notification("error", "failed to load " .. nextscript.name, "ok")
     end
     
     loadingqueue = false
@@ -260,67 +255,66 @@ local function addtoqueue(name, url)
 end
 
 local function updatequeuetab()
-    for _, child in pairs(queue_tab.container:getchildren()) do
-        if child:isa("textbutton") or child:isa("textlabel") then
-            child:destroy()
+    for _, child in pairs(queue_tab.Container:GetChildren()) do
+        if child:IsA("TextButton") or child:IsA("TextLabel") then
+            child:Destroy()
         end
     end
     
     if #queuedscripts == 0 then
-        queue_tab:label("queue empty")
+        queue_tab:Label("queue empty")
         return
     end
     
     for i, qscript in ipairs(queuedscripts) do
-        queue_tab:label(i .. ". " .. qscript.name)
+        queue_tab:Label(i .. ". " .. qscript.name)
     end
     
-    queue_tab:button("clear queue", function()
+    queue_tab:Button("clear queue", function()
         queuedscripts = {}
         updatequeuetab()
     end)
 end
 
--- add queue buttons to scripts tab (modified buttons)
 -- clear scripts tab and recreate with queue option
-for _, child in pairs(scripts_tab.container:getchildren()) do
-    if child:isa("textbutton") then
-        child:destroy()
+for _, child in pairs(scripts_tab.Container:GetChildren()) do
+    if child:IsA("TextButton") then
+        child:Destroy()
     end
 end
 
-scripts_tab:label("search")
-local searchbox = scripts_tab:textbox("search", true, function(v)
+scripts_tab:Label("search")
+local searchbox = scripts_tab:Textbox("search", true, function(v)
     local searchterm = v:lower()
-    for _, child in pairs(scripts_tab.container:getchildren()) do
-        if child:isa("textbutton") then
-            local shouldshow = searchterm == "" or child.name:lower():find(searchterm)
-            child.visible = shouldshow
+    for _, child in pairs(scripts_tab.Container:GetChildren()) do
+        if child:IsA("TextButton") then
+            local shouldshow = searchterm == "" or string.find(string.lower(child.Name), searchterm)
+            child.Visible = shouldshow
         end
     end
 end)
 
-scripts_tab:button("all", function() filterbycategory("all") end)
-scripts_tab:button("combat", function() filterbycategory("combat") end)
-scripts_tab:button("farming", function() filterbycategory("farming") end)
-scripts_tab:button("survival", function() filterbycategory("survival") end)
-scripts_tab:button("misc", function() filterbycategory("misc") end)
+scripts_tab:Button("all", function() filterbycategory("all") end)
+scripts_tab:Button("combat", function() filterbycategory("combat") end)
+scripts_tab:Button("farming", function() filterbycategory("farming") end)
+scripts_tab:Button("survival", function() filterbycategory("survival") end)
+scripts_tab:Button("admin", function() filterbycategory("admin") end)
 
-scripts_tab:label("")
+scripts_tab:Label("")
 
 for _, script in ipairs(scripts) do
-    local container = scripts_tab:newcontainer({name = script.name .. "_container", size = 80})
-    local btn = container:button(script.name, function()
+    local container = scripts_tab:NewContainer({Name = script.name .. "_container", Size = 80})
+    local btn = container:Button(script.name, function()
         loadscript(script.url, script.name)
     end)
-    btn.name = script.name
+    btn.Name = script.name
     
-    local queuebtn = container:button("queue", function()
+    local queuebtn = container:Button("queue", function()
         addtoqueue(script.name, script.url)
     end)
-    queuebtn.name = script.name .. "_queue"
+    queuebtn.Name = script.name .. "_queue"
     
-    local favbtn = container:button("star", function()
+    local favbtn = container:Button("star", function()
         local found = false
         for i, f in ipairs(favorites) do
             if f == script.name then
@@ -334,34 +328,34 @@ for _, script in ipairs(scripts) do
         end
         savefavorites()
         updatefavoritestab()
-        lib:notification("lunarware", script.name .. (found and " removed from favorites" or " added to favorites"), "ok")
+        lib:Notification("lunarware", script.name .. (found and " removed from favorites" or " added to favorites"), "ok")
     end)
-    favbtn.name = script.name .. "_fav"
+    favbtn.Name = script.name .. "_fav"
 end
 
 -- settings tab
-settings_tab:label("theme")
-settings_tab:dropdown("accent color", {"default", "red", "blue", "green", "purple"}, function(v)
+settings_tab:Label("theme")
+settings_tab:Dropdown("accent color", {"default", "red", "blue", "green", "purple"}, function(v)
     if v == "red" then
-        lib:changepresetcolor(color3.fromrgb(255, 50, 50))
+        lib:ChangePresetColor(Color3.fromRGB(255, 50, 50))
     elseif v == "blue" then
-        lib:changepresetcolor(color3.fromrgb(50, 100, 255))
+        lib:ChangePresetColor(Color3.fromRGB(50, 100, 255))
     elseif v == "green" then
-        lib:changepresetcolor(color3.fromrgb(50, 255, 50))
+        lib:ChangePresetColor(Color3.fromRGB(50, 255, 50))
     elseif v == "purple" then
-        lib:changepresetcolor(color3.fromrgb(150, 50, 255))
+        lib:ChangePresetColor(Color3.fromRGB(150, 50, 255))
     else
-        lib:changepresetcolor(color3.fromrgb(44, 120, 224))
+        lib:ChangePresetColor(Color3.fromRGB(44, 120, 224))
     end
 end)
 
-settings_tab:label("")
-settings_tab:toggle("notifications", true, function(v)
+settings_tab:Label("")
+settings_tab:Toggle("notifications", true, function(v)
     getgenv().notificationsenabled = v
 end)
 
-settings_tab:label("")
-settings_tab:button("clear all data", function()
+settings_tab:Label("")
+settings_tab:Button("clear all data", function()
     favorites = {}
     recent = {}
     queuedscripts = {}
@@ -370,13 +364,13 @@ settings_tab:button("clear all data", function()
     updatefavoritestab()
     updaterecenttab()
     updatequeuetab()
-    lib:notification("lunarware", "all data cleared", "ok")
+    lib:Notification("lunarware", "all data cleared", "ok")
 end)
 
-settings_tab:label("")
-settings_tab:button("unload hub", function()
-    local ui = game:getservice("coregui"):findfirstchild("ui")
-    if ui then ui:destroy() end
+settings_tab:Label("")
+settings_tab:Button("unload hub", function()
+    local ui = game:GetService("CoreGui"):FindFirstChild("ui")
+    if ui then ui:Destroy() end
 end)
 
 -- initial updates
